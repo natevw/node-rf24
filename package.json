@@ -1,0 +1,22 @@
+{
+  "name": "rf24",
+  "version": "0.0.0",
+  "description": "Well-behaved async wrapper around C++ RF24 library. Control nRF24L01+ wireless radio communications from a server with SPI/GPIO ports (e.g. Raspberry Pi)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "raspi",
+    "arduino",
+    "wireless",
+    "nrf24l01",
+    "transceiver"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/natevw/node-rf24.git"
+  },
+  "author": "Nathan Vander Wilt",
+  "license": "BSD"
+}
