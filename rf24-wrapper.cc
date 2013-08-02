@@ -1,6 +1,9 @@
 #include <node.h>
 #include <v8.h>
 
+#include "RF24.h"
+
+
 using namespace v8;
 
 class Wrapper : public node::ObjectWrap {
@@ -34,6 +37,8 @@ void Wrapper::Init(Handle<Object> exports) {
 
 Handle<Value> Wrapper::New(const Arguments& args) {
   HandleScope scope;
+  
+  RF24 test(1,2);
 
   Wrapper* obj = new Wrapper();
   obj->counter_ = args[0]->IsUndefined() ? 0 : args[0]->NumberValue();
