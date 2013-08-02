@@ -11,15 +11,15 @@ class Wrapper : public node::ObjectWrap {
   static void Init(v8::Handle<v8::Object> exports);
 
  private:
-  Wrapper();
+  Wrapper(uint8_t ce, uint8_t cs);
   ~Wrapper();
 
   static v8::Handle<v8::Value> New(const v8::Arguments& args);
   static v8::Handle<v8::Value> PlusOne(const v8::Arguments& args);
-  double counter_;
+  RF24 radio;
 };
 
-Wrapper::Wrapper() {};
+Wrapper::Wrapper(uint8_t ce, uint8_t cs) : radio(ce,cs) {};
 Wrapper::~Wrapper() {};
 
 void Wrapper::Init(Handle<Object> exports) {
@@ -37,11 +37,8 @@ void Wrapper::Init(Handle<Object> exports) {
 
 Handle<Value> Wrapper::New(const Arguments& args) {
   HandleScope scope;
-  
-  RF24 test(1,2);
 
-  Wrapper* obj = new Wrapper();
-  obj->counter_ = args[0]->IsUndefined() ? 0 : args[0]->NumberValue();
+  Wrapper* obj = new Wrapper(args[0]->NumberValue(), args[1]->NumberValue());
   obj->Wrap(args.This());
 
   return args.This();
@@ -51,9 +48,9 @@ Handle<Value> Wrapper::PlusOne(const Arguments& args) {
   HandleScope scope;
 
   Wrapper* obj = ObjectWrap::Unwrap<Wrapper>(args.This());
-  obj->counter_ += 1;
+  (void)obj;
 
-  return scope.Close(Number::New(obj->counter_));
+  return scope.Close(Number::New(42));
 }
 
 
