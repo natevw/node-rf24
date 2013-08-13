@@ -4,7 +4,25 @@
 #include "RF24.h"
 
 using namespace v8;
-class Wrapper;
+
+class Wrapper : public node::ObjectWrap {
+public:
+    static void Init(Handle<Object> exports);
+    
+private:
+    Wrapper(uint8_t ce, uint8_t cs);
+    ~Wrapper();
+    
+    RF24 radio;
+    uv_mutex_t radioAccess;
+    
+    static Handle<Value> New(const Arguments& args);
+    static Handle<Value> Begin(const Arguments& args);
+    static Handle<Value> Listen(const Arguments& args);
+    static Handle<Value> Write(const Arguments& args);
+    static Handle<Value> Available(const Arguments& args);
+    static Handle<Value> Read(const Arguments& args);
+};
 
 // HT http://kkaefer.github.io/node-cpp-modules/#calling-async
 struct Baton {
@@ -78,23 +96,6 @@ extern "C" {
         delete baton;
     }
 }
-
-
-class Wrapper : public node::ObjectWrap {
-public:
-    static void Init(Handle<Object> exports);
-    
-private:
-    Wrapper(uint8_t ce, uint8_t cs);
-    ~Wrapper();
-    
-    RF24 radio;
-    uv_mutex_t radioAccess;
-    
-    static Handle<Value> New(const Arguments& args);
-    static Handle<Value> Begin(const Arguments& args);
-    static Handle<Value> Listen(const Arguments& args);
-};
 
 Wrapper::Wrapper(uint8_t ce, uint8_t cs) : radio(ce,cs) {
     uv_mutex_init(&radioAccess);
