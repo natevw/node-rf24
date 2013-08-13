@@ -3,6 +3,8 @@
 
 #include "RF24.h"
 
+using namespace v8;
+class Wrapper;
 
 // HT http://kkaefer.github.io/node-cpp-modules/#calling-async
 struct Baton {
@@ -19,43 +21,43 @@ struct Baton {
 extern "C" {
     void RadioBegin(uv_work_t* req) {
         Baton* baton = static_cast<Baton*>(req->data);
-        uv_mutex_lock(baton->obj.radioAccess);
-        baton->obj.radio.begin();
-        uv_mutex_unlock(baton->obj.radioAccess);
+        uv_mutex_lock(baton->obj->radioAccess);
+        baton->obj->radio.begin();
+        uv_mutex_unlock(baton->obj->radioAccess);
         baton->resultType = VOID_CUSTOM;
     }
     
     void RadioListen(uv_work_t* req) {
         Baton* baton = static_cast<Baton*>(req->data);
-        uv_mutex_lock(baton->obj.radioAccess);
-        if (baton->custom[0]) baton->obj.radio.startListening();
-        else baton->obj.radio.stopListening();
-        uv_mutex_unlock(baton->obj.radioAccess);
+        uv_mutex_lock(baton->obj->radioAccess);
+        if (baton->custom[0]) baton->obj->radio.startListening();
+        else baton->obj->radio.stopListening();
+        uv_mutex_unlock(baton->obj->radioAccess);
         baton->resultType = VOID_CUSTOM;
     }
     
     void RadioWrite(uv_work_t* req) {
         Baton* baton = static_cast<Baton*>(req->data);
-        uv_mutex_lock(baton->obj.radioAccess);
-        baton->custom[0] = baton->obj.radio.write(baton->custom + 1, baton->custom[0]);
-        uv_mutex_unlock(baton->obj.radioAccess);
+        uv_mutex_lock(baton->obj->radioAccess);
+        baton->custom[0] = baton->obj->radio.write(baton->custom + 1, baton->custom[0]);
+        uv_mutex_unlock(baton->obj->radioAccess);
         baton->resultType = BOOL_CUSTOM;
     }
     
     void RadioAvailable(uv_work_t* req) {
         Baton* baton = static_cast<Baton*>(req->data);
-        uv_mutex_lock(baton->obj.radioAccess);
-        baton->custom[0] = baton->obj.radio.available();
-        uv_mutex_unlock(baton->obj.radioAccess);
+        uv_mutex_lock(baton->obj->radioAccess);
+        baton->custom[0] = baton->obj->radio.available();
+        uv_mutex_unlock(baton->obj->radioAccess);
         baton->resultType = BOOL_CUSTOM;
     }
     
     void RadioRead(uv_work_t* req) {
         Baton* baton = static_cast<Baton*>(req->data);
-        uv_mutex_lock(baton->obj.radioAccess);
-        baton->custom[0] = baton->obj.radio.getPayloadSize();
-        (void)baton->obj.radio.read(baton->custom+1, sizeof(baton->custom)-1);
-        uv_mutex_unlock(baton->obj.radioAccess);
+        uv_mutex_lock(baton->obj->radioAccess);
+        baton->custom[0] = baton->obj->radio.getPayloadSize();
+        (void)baton->obj->radio.read(baton->custom+1, sizeof(baton->custom)-1);
+        uv_mutex_unlock(baton->obj->radioAccess);
         baton->resultType = DATA_CUSTOM;
     }
     
@@ -78,11 +80,9 @@ extern "C" {
 }
 
 
-using namespace v8;
-
 class Wrapper : public node::ObjectWrap {
 public:
-    static void Init(v8::Handle<v8::Object> exports);
+    static void Init(Handle<Object> exports);
     
 private:
     Wrapper(uint8_t ce, uint8_t cs);
@@ -91,9 +91,9 @@ private:
     RF24 radio;
     uv_mutex_t radioAccess;
     
-    static v8::Handle<v8::Value> New(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Begin(const v8::Arguments& args);
-    static v8::Handle<v8::Value> Listen(const v8::Arguments& args);
+    static Handle<Value> New(const Arguments& args);
+    static Handle<Value> Begin(const Arguments& args);
+    static Handle<Value> Listen(const Arguments& args);
 };
 
 Wrapper::Wrapper(uint8_t ce, uint8_t cs) : radio(ce,cs) {

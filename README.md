@@ -4,6 +4,8 @@ Talk with your Arduino or other µC-driven remotely from node.js, via an nRF24L0
 
 Simply `npm install rf24` and `require('rf24')` in your code to use the API.
 
+[Actually, now have to clone this, `git submodule init && git submodule update && npm build .`]
+
 
 # API
 
