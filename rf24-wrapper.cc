@@ -85,11 +85,14 @@ extern "C" {
         HandleScope scope;
         Baton* baton = static_cast<Baton*>(req->data);
         
+/*
         Local<Value> e = Null();
         Local<Value> d = Null();        // TODO: set based on baton->resultType
         Local<Value> argv[] = {e,d};
+*/
+        Local<Value> argv[] = {};
         TryCatch try_catch;
-        baton->callback->Call(Context::GetCurrent()->Global(), 2, argv);
+        baton->callback->Call(Context::GetCurrent()->Global(), sizeof(argv), argv);
         if (try_catch.HasCaught()) {
             node::FatalException(try_catch);
         }
@@ -140,7 +143,8 @@ Handle<Value> Wrapper::Begin(const Arguments& args) {
     
     Baton* baton = new Baton();
     baton->request.data = baton;
-    baton->callback = Persistent<Function>::New(args[0]);
+    Local<Function> args0 = Local<Function>::Cast(args[0]);
+    baton->callback = Persistent<Function>::New(args0);
     baton->obj = ObjectWrap::Unwrap<Wrapper>(args.This());
     uv_queue_work(uv_default_loop(), &baton->request, RadioBegin, FinishRadioCall);
     
@@ -156,7 +160,8 @@ Handle<Value> Wrapper::Listen(const Arguments& args) {
     
     Baton* baton = new Baton();
     baton->request.data = baton;
-    baton->callback = Persistent<Function>::New(args[1]);
+    Local<Function> args0 = Local<Function>::Cast(args[0]);
+    baton->callback = Persistent<Function>::New(args0);
     baton->obj = ObjectWrap::Unwrap<Wrapper>(args.This());
     baton->custom[0] = args[0]->BooleanValue();
     uv_queue_work(uv_default_loop(), &baton->request, RadioListen, FinishRadioCall);
@@ -169,15 +174,17 @@ Handle<Value> Wrapper::Write(const Arguments& args) {
     
     assert(args.Length() == 2);
     assert(node::Buffer::HasInstance(args[0]));
-    assert(node::Buffer::Length(args[0]) < sizeof Baton().custom);        // http://stackoverflow.com/a/3718950/179583
+    Local<Object> args0 = args[0]->ToObject();
+    assert(node::Buffer::Length(args0) < sizeof Baton().custom);        // http://stackoverflow.com/a/3718950/179583
     assert(args[1]->IsFunction());
     
     Baton* baton = new Baton();
     baton->request.data = baton;
-    baton->callback = Persistent<Function>::New(args[1]);
+    Local<Function> args1 = Local<Function>::Cast(args[1]);
+    baton->callback = Persistent<Function>::New(args1);
     baton->obj = ObjectWrap::Unwrap<Wrapper>(args.This());
-    baton->custom[0] = node::Buffer::Length(args[0]);
-    memcpy(baton->custom+1, node::Buffer::Data(args[0]), baton->custom[0]);
+    baton->custom[0] = node::Buffer::Length(args0);
+    memcpy(baton->custom+1, node::Buffer::Data(args0), baton->custom[0]);
     uv_queue_work(uv_default_loop(), &baton->request, RadioWrite, FinishRadioCall);
     
     return scope.Close(Undefined());
@@ -191,7 +198,8 @@ Handle<Value> Wrapper::Available(const Arguments& args) {
     
     Baton* baton = new Baton();
     baton->request.data = baton;
-    baton->callback = Persistent<Function>::New(args[1]);
+    Local<Function> args0 = Local<Function>::Cast(args[0]);
+    baton->callback = Persistent<Function>::New(args0);
     baton->obj = ObjectWrap::Unwrap<Wrapper>(args.This());
     uv_queue_work(uv_default_loop(), &baton->request, RadioAvailable, FinishRadioCall);
     
@@ -206,7 +214,8 @@ Handle<Value> Wrapper::Read(const Arguments& args) {
     
     Baton* baton = new Baton();
     baton->request.data = baton;
-    baton->callback = Persistent<Function>::New(args[1]);
+    Local<Function> args0 = Local<Function>::Cast(args[0]);
+    baton->callback = Persistent<Function>::New(args0);
     baton->obj = ObjectWrap::Unwrap<Wrapper>(args.This());
     uv_queue_work(uv_default_loop(), &baton->request, RadioRead, FinishRadioCall);
     
