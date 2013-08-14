@@ -128,7 +128,10 @@ void Wrapper::Init(Handle<Object> exports) {
 Handle<Value> Wrapper::New(const Arguments& args) {
     HandleScope scope;
     
-    // TODO: check arguments like http://nodejs.org/api/addons.html#addons_function_arguments
+    assert(args.Length() == 2);
+    assert(args[0]->IsNumber());
+    assert(args[1]->IsNumber());
+    
     Wrapper* obj = new Wrapper(args[0]->NumberValue(), args[1]->NumberValue());
     obj->Wrap(args.This());
     
