@@ -2,6 +2,42 @@
 // see https://github.com/arunoda/node-usage as an example
 var _rf24 = require("./build/Release/rf24");
 
+exports.radio = function (ce, cs) {
+    ce || (ce = 22);
+    cs || (cs = 24);        // 8?
+    var xcvr = new _rf24.Wrapper(ce,cs),
+        radio = {};
+    
+    radio.begin = function (cb) {
+        cb || (cb = function () {});
+        xcvr.begin(cb);
+    };
+    
+    radio.listen = function (listen, cb) {
+        if (typeof listen === 'function') {
+            cb = listen;
+            listen = true;
+        }
+        cb || (cb = function () {});
+        xcvr.listen(listen, cb);
+    };
+    
+    radio.write = function (data, cb) {
+        if (typeof data === 'string') {
+            data = new Buffer(data);
+        }
+        cb || (cb = function () {});
+        xcvr.write(data, cb);
+    };
+    
+    radio.available = xcvr.available;
+    radio.read = xcvr.read;
+    
+    return radio;
+}
+
+
+
 
 /*
     ctor(s)
@@ -34,29 +70,3 @@ var _rf24 = require("./build/Release/rf24");
     whatHappened
     testCarrier/testRPD
 */
-
-
-
-
-var obj = new _rf24.Wrapper(10);
-console.log( obj.plusOne() ); // 11
-console.log( obj.plusOne() ); // 12
-console.log( obj.plusOne() ); // 13
-
-exports.radio = function (onready) {           // 'ready', 'error'
-    var xcvr = {};
-    
-    // TODO: init+begin on RF24 instance
-    
-    // object (acknowlegement?) vs. data (fragmentation?) pipe issues
-    
-    // blah…just write straight async wrapper for RF24 and make something more nice when someone cares
-    
-    xcvr.createStream = function () {     // write address, read addresses, options (end on switch?)
-    
-    }
-    
-    
-    return xcvr;
-}
-
