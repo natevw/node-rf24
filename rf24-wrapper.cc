@@ -93,12 +93,12 @@ extern "C" {
         Local<Value> argv[] = {};
         TryCatch try_catch;
         baton->callback->Call(Context::GetCurrent()->Global(), sizeof(argv), argv);
+        baton->callback.Dispose();
+        delete baton;
+        
         if (try_catch.HasCaught()) {
             node::FatalException(try_catch);
         }
-        
-        baton->callback.Dispose();
-        delete baton;
     }
 }
 
