@@ -8,7 +8,7 @@ exports.radio = function (dev, speed, ce) {
     ce = 25;
     // TODO: improve argument handling
     
-    var xcvr = new _rf24.Wrapper(ce,cs),
+    var xcvr = new _rf24.Wrapper(dev,speed,ce),
         radio = {};
     
     radio.begin = function (cb) {
