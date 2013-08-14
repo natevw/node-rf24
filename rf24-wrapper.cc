@@ -38,67 +38,65 @@ struct Baton {
     customType resultType;
 };
 
-extern "C" {
-    void RadioBegin(uv_work_t* req) {
-        Baton* baton = static_cast<Baton*>(req->data);
-        uv_mutex_lock(&baton->obj->radioAccess);
-        baton->obj->radio.begin();
-        uv_mutex_unlock(&baton->obj->radioAccess);
-        baton->resultType = VOID_CUSTOM;
-    }
+void RadioBegin(uv_work_t* req) {
+    Baton* baton = static_cast<Baton*>(req->data);
+    uv_mutex_lock(&baton->obj->radioAccess);
+    baton->obj->radio.begin();
+    uv_mutex_unlock(&baton->obj->radioAccess);
+    baton->resultType = VOID_CUSTOM;
+}
+
+void RadioListen(uv_work_t* req) {
+    Baton* baton = static_cast<Baton*>(req->data);
+    uv_mutex_lock(&baton->obj->radioAccess);
+    if (baton->custom[0]) baton->obj->radio.startListening();
+    else baton->obj->radio.stopListening();
+    uv_mutex_unlock(&baton->obj->radioAccess);
+    baton->resultType = VOID_CUSTOM;
+}
+
+void RadioWrite(uv_work_t* req) {
+    Baton* baton = static_cast<Baton*>(req->data);
+    uv_mutex_lock(&baton->obj->radioAccess);
+    baton->custom[0] = baton->obj->radio.write(baton->custom + 1, baton->custom[0]);
+    uv_mutex_unlock(&baton->obj->radioAccess);
+    baton->resultType = BOOL_CUSTOM;
+}
+
+void RadioAvailable(uv_work_t* req) {
+    Baton* baton = static_cast<Baton*>(req->data);
+    uv_mutex_lock(&baton->obj->radioAccess);
+    baton->custom[0] = baton->obj->radio.available();
+    uv_mutex_unlock(&baton->obj->radioAccess);
+    baton->resultType = BOOL_CUSTOM;
+}
+
+void RadioRead(uv_work_t* req) {
+    Baton* baton = static_cast<Baton*>(req->data);
+    uv_mutex_lock(&baton->obj->radioAccess);
+    baton->custom[0] = baton->obj->radio.getPayloadSize();
+    (void)baton->obj->radio.read(baton->custom+1, sizeof(baton->custom)-1);
+    uv_mutex_unlock(&baton->obj->radioAccess);
+    baton->resultType = DATA_CUSTOM;
+}
+
+void FinishRadioCall(uv_work_t* req) {
+    HandleScope scope;
+    Baton* baton = static_cast<Baton*>(req->data);
     
-    void RadioListen(uv_work_t* req) {
-        Baton* baton = static_cast<Baton*>(req->data);
-        uv_mutex_lock(&baton->obj->radioAccess);
-        if (baton->custom[0]) baton->obj->radio.startListening();
-        else baton->obj->radio.stopListening();
-        uv_mutex_unlock(&baton->obj->radioAccess);
-        baton->resultType = VOID_CUSTOM;
-    }
-    
-    void RadioWrite(uv_work_t* req) {
-        Baton* baton = static_cast<Baton*>(req->data);
-        uv_mutex_lock(&baton->obj->radioAccess);
-        baton->custom[0] = baton->obj->radio.write(baton->custom + 1, baton->custom[0]);
-        uv_mutex_unlock(&baton->obj->radioAccess);
-        baton->resultType = BOOL_CUSTOM;
-    }
-    
-    void RadioAvailable(uv_work_t* req) {
-        Baton* baton = static_cast<Baton*>(req->data);
-        uv_mutex_lock(&baton->obj->radioAccess);
-        baton->custom[0] = baton->obj->radio.available();
-        uv_mutex_unlock(&baton->obj->radioAccess);
-        baton->resultType = BOOL_CUSTOM;
-    }
-    
-    void RadioRead(uv_work_t* req) {
-        Baton* baton = static_cast<Baton*>(req->data);
-        uv_mutex_lock(&baton->obj->radioAccess);
-        baton->custom[0] = baton->obj->radio.getPayloadSize();
-        (void)baton->obj->radio.read(baton->custom+1, sizeof(baton->custom)-1);
-        uv_mutex_unlock(&baton->obj->radioAccess);
-        baton->resultType = DATA_CUSTOM;
-    }
-    
-    void FinishRadioCall(uv_work_t* req) {
-        HandleScope scope;
-        Baton* baton = static_cast<Baton*>(req->data);
-        
 /*
-        Local<Value> e = Null();
-        Local<Value> d = Null();        // TODO: set based on baton->resultType
-        Local<Value> argv[] = {e,d};
+    Local<Value> e = Null();
+    Local<Value> d = Null();        // TODO: set based on baton->resultType
+    Local<Value> argv[] = {e,d};
 */
-        Local<Value> argv[] = {};
-        TryCatch try_catch;
-        baton->callback->Call(Context::GetCurrent()->Global(), sizeof(argv), argv);
-        baton->callback.Dispose();
-        delete baton;
-        
-        if (try_catch.HasCaught()) {
-            node::FatalException(try_catch);
-        }
+    Local<Value> argv[] = {};
+    TryCatch try_catch;
+    baton->callback->Call(Context::GetCurrent()->Global(), sizeof(argv), argv);
+    baton->callback.Dispose();
+    delete baton;
+    
+    if (try_catch.HasCaught()) {
+        node::FatalException(try_catch);
     }
 }
 
