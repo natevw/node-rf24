@@ -146,8 +146,7 @@ Handle<Value> Wrapper::Begin(const Arguments& args) {
     
     Baton* baton = new Baton();
     baton->request.data = baton;
-    Local<Function> args0 = Local<Function>::Cast(args[0]);
-    baton->callback = Persistent<Function>::New(args0);
+    baton->callback = Persistent<Function>::New(Local<Function>::Cast(args[0]));
     baton->obj = ObjectWrap::Unwrap<Wrapper>(args.This());
     uv_queue_work(uv_default_loop(), &baton->request, RadioBegin, FinishRadioCall);
     
@@ -163,8 +162,7 @@ Handle<Value> Wrapper::Listen(const Arguments& args) {
     
     Baton* baton = new Baton();
     baton->request.data = baton;
-    Local<Function> args0 = Local<Function>::Cast(args[0]);
-    baton->callback = Persistent<Function>::New(args0);
+    baton->callback = Persistent<Function>::New(Local<Function>::Cast(args[0]));
     baton->obj = ObjectWrap::Unwrap<Wrapper>(args.This());
     baton->custom[0] = args[0]->BooleanValue();
     uv_queue_work(uv_default_loop(), &baton->request, RadioListen, FinishRadioCall);
@@ -183,8 +181,7 @@ Handle<Value> Wrapper::Write(const Arguments& args) {
     
     Baton* baton = new Baton();
     baton->request.data = baton;
-    Local<Function> args1 = Local<Function>::Cast(args[1]);
-    baton->callback = Persistent<Function>::New(args1);
+    baton->callback = Persistent<Function>::New(Local<Function>::Cast(args[1]));
     baton->obj = ObjectWrap::Unwrap<Wrapper>(args.This());
     baton->custom[0] = node::Buffer::Length(args0);
     memcpy(baton->custom+1, node::Buffer::Data(args0), baton->custom[0]);
@@ -201,8 +198,7 @@ Handle<Value> Wrapper::Available(const Arguments& args) {
     
     Baton* baton = new Baton();
     baton->request.data = baton;
-    Local<Function> args0 = Local<Function>::Cast(args[0]);
-    baton->callback = Persistent<Function>::New(args0);
+    baton->callback = Persistent<Function>::New(Local<Function>::Cast(args[0]));
     baton->obj = ObjectWrap::Unwrap<Wrapper>(args.This());
     uv_queue_work(uv_default_loop(), &baton->request, RadioAvailable, FinishRadioCall);
     
@@ -217,8 +213,7 @@ Handle<Value> Wrapper::Read(const Arguments& args) {
     
     Baton* baton = new Baton();
     baton->request.data = baton;
-    Local<Function> args0 = Local<Function>::Cast(args[0]);
-    baton->callback = Persistent<Function>::New(args0);
+    baton->callback = Persistent<Function>::New(Local<Function>::Cast(args[0]));
     baton->obj = ObjectWrap::Unwrap<Wrapper>(args.This());
     uv_queue_work(uv_default_loop(), &baton->request, RadioRead, FinishRadioCall);
     
