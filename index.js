@@ -3,8 +3,8 @@
 var _rf24 = require("./build/Release/rf24");
 
 exports.radio = function (ce, cs) {
-    ce || (ce = 22);
-    cs || (cs = 24);        // 8?
+    ce || (ce = 8);
+    cs || (cs = 25);
     var xcvr = new _rf24.Wrapper(ce,cs),
         radio = {};
     
