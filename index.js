@@ -2,9 +2,12 @@
 // see https://github.com/arunoda/node-usage as an example
 var _rf24 = require("./build/Release/rf24");
 
-exports.radio = function (ce, cs) {
-    ce || (ce = 8);
-    cs || (cs = 25);
+exports.radio = function (dev, speed, ce) {
+    dev = "/dev/spidev0.0";
+    speed = 8000000;
+    ce = 25;
+    // TODO: improve argument handling
+    
     var xcvr = new _rf24.Wrapper(ce,cs),
         radio = {};
     

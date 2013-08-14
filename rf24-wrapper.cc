@@ -15,7 +15,7 @@ public:
     uv_mutex_t radioAccess;
 
 private:
-    Wrapper(uint8_t ce, uint8_t cs);
+    Wrapper(string spi, uint32_t spd, uint8_t ce);
     ~Wrapper();
     
     static Handle<Value> New(const Arguments& args);
@@ -100,7 +100,7 @@ void FinishRadioCall(uv_work_t* req) {
     }
 }
 
-Wrapper::Wrapper(uint8_t ce, uint8_t cs) : radio(ce,cs) {
+Wrapper::Wrapper(string spi, uint32_t spd, uint8_t ce) : radio(spi,spd,ce) {
     uv_mutex_init(&radioAccess);
 };
 Wrapper::~Wrapper() {
@@ -126,11 +126,12 @@ void Wrapper::Init(Handle<Object> exports) {
 Handle<Value> Wrapper::New(const Arguments& args) {
     HandleScope scope;
     
-    assert(args.Length() == 2);
-    assert(args[0]->IsNumber());
+    assert(args.Length() == 3);
+    assert(args[0]->IsString());
     assert(args[1]->IsNumber());
+    assert(args[2]->IsNumber());
     
-    Wrapper* obj = new Wrapper(args[0]->NumberValue(), args[1]->NumberValue());
+    Wrapper* obj = new Wrapper(*String::Utf8Value(args[0]->ToString()), args[1]->NumberValue(), args[2]->NumberValue());
     obj->Wrap(args.This());
     
     return args.This();
