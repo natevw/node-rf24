@@ -1,4 +1,5 @@
 #include <node.h>
+#include <node_buffer.h>
 #include <v8.h>
 
 #include "RF24.h"
@@ -9,12 +10,13 @@ class Wrapper : public node::ObjectWrap {
 public:
     static void Init(Handle<Object> exports);
     
+    // exposed for use by Radio workers
+    RF24 radio;
+    uv_mutex_t radioAccess;
+
 private:
     Wrapper(uint8_t ce, uint8_t cs);
     ~Wrapper();
-    
-    RF24 radio;
-    uv_mutex_t radioAccess;
     
     static Handle<Value> New(const Arguments& args);
     static Handle<Value> Begin(const Arguments& args);
@@ -25,6 +27,7 @@ private:
 };
 
 // HT http://kkaefer.github.io/node-cpp-modules/#calling-async
+enum customType {VOID_CUSTOM,BOOL_CUSTOM,DATA_CUSTOM,};
 struct Baton {
     uv_work_t request;
     Persistent<Function> callback;
@@ -32,50 +35,49 @@ struct Baton {
     Wrapper* obj;
     uint8_t custom[64];
     
-    enum customType {VOID_CUSTOM,BOOL_CUSTOM,DATA_CUSTOM,};
     customType resultType;
 };
 
 extern "C" {
     void RadioBegin(uv_work_t* req) {
         Baton* baton = static_cast<Baton*>(req->data);
-        uv_mutex_lock(baton->obj->radioAccess);
+        uv_mutex_lock(&baton->obj->radioAccess);
         baton->obj->radio.begin();
-        uv_mutex_unlock(baton->obj->radioAccess);
+        uv_mutex_unlock(&baton->obj->radioAccess);
         baton->resultType = VOID_CUSTOM;
     }
     
     void RadioListen(uv_work_t* req) {
         Baton* baton = static_cast<Baton*>(req->data);
-        uv_mutex_lock(baton->obj->radioAccess);
+        uv_mutex_lock(&baton->obj->radioAccess);
         if (baton->custom[0]) baton->obj->radio.startListening();
         else baton->obj->radio.stopListening();
-        uv_mutex_unlock(baton->obj->radioAccess);
+        uv_mutex_unlock(&baton->obj->radioAccess);
         baton->resultType = VOID_CUSTOM;
     }
     
     void RadioWrite(uv_work_t* req) {
         Baton* baton = static_cast<Baton*>(req->data);
-        uv_mutex_lock(baton->obj->radioAccess);
+        uv_mutex_lock(&baton->obj->radioAccess);
         baton->custom[0] = baton->obj->radio.write(baton->custom + 1, baton->custom[0]);
-        uv_mutex_unlock(baton->obj->radioAccess);
+        uv_mutex_unlock(&baton->obj->radioAccess);
         baton->resultType = BOOL_CUSTOM;
     }
     
     void RadioAvailable(uv_work_t* req) {
         Baton* baton = static_cast<Baton*>(req->data);
-        uv_mutex_lock(baton->obj->radioAccess);
+        uv_mutex_lock(&baton->obj->radioAccess);
         baton->custom[0] = baton->obj->radio.available();
-        uv_mutex_unlock(baton->obj->radioAccess);
+        uv_mutex_unlock(&baton->obj->radioAccess);
         baton->resultType = BOOL_CUSTOM;
     }
     
     void RadioRead(uv_work_t* req) {
         Baton* baton = static_cast<Baton*>(req->data);
-        uv_mutex_lock(baton->obj->radioAccess);
+        uv_mutex_lock(&baton->obj->radioAccess);
         baton->custom[0] = baton->obj->radio.getPayloadSize();
         (void)baton->obj->radio.read(baton->custom+1, sizeof(baton->custom)-1);
-        uv_mutex_unlock(baton->obj->radioAccess);
+        uv_mutex_unlock(&baton->obj->radioAccess);
         baton->resultType = DATA_CUSTOM;
     }
     
@@ -166,16 +168,16 @@ Handle<Value> Wrapper::Write(const Arguments& args) {
     HandleScope scope;
     
     assert(args.Length() == 2);
-    assert(Buffer::HasInstance(args[0]));
-    assert(Buffer::Length(args[0]) < sizeof Baton().custom);        // http://stackoverflow.com/a/3718950/179583
+    assert(node::Buffer::HasInstance(args[0]));
+    assert(node::Buffer::Length(args[0]) < sizeof Baton().custom);        // http://stackoverflow.com/a/3718950/179583
     assert(args[1]->IsFunction());
     
     Baton* baton = new Baton();
     baton->request.data = baton;
     baton->callback = Persistent<Function>::New(args[1]);
     baton->obj = ObjectWrap::Unwrap<Wrapper>(args.This());
-    baton->custom[0] = Buffer::Length(args[0]);
-    memcpy(baton->custom+1, Buffer::Data(args[0]), baton->custom[0]);
+    baton->custom[0] = node::Buffer::Length(args[0]);
+    memcpy(baton->custom+1, node::Buffer::Data(args[0]), baton->custom[0]);
     uv_queue_work(uv_default_loop(), &baton->request, RadioWrite, FinishRadioCall);
     
     return scope.Close(Undefined());
